@@ -1,0 +1,70 @@
+# ========================================
+# FRONT-NEXTJS - GITIGNORE
+# ========================================
+
+# Dependências
+node_modules/
+package-lock.json
+yarn.lock
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Build do Next.js
+.next/
+out/
+build/
+
+# Cache e arquivos temporários
+.cache/
+.swc/
+.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Arquivos do sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Arquivos temporários
+*.tmp
+*.temp
+.temp/
+
+# Arquivos de backup
+*.bak
+*.backup
+*.old
+
+# Arquivos de configuração local
+*.local
+local.*
+
+# Arquivos de teste
+coverage/
+.nyc_output/
+
+# Arquivos de análise
+.vercel/
+.netlify/
