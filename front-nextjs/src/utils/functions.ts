@@ -1,4 +1,5 @@
 import { getApiBaseUrl, getMessageApiBaseUrl } from './config';
+import { SessionInfo } from './types';
 
 export const api = (path: string) => {
   // Remove o prefixo /api se existir
@@ -25,12 +26,12 @@ export const getStatusText = (status: string) => {
 export const formatPhoneNumber = (phone: string) => {
   // Remove todos os caracteres não numéricos
   const cleaned = phone.replace(/\D/g, '');
-  
+
   // Adiciona @c.us se não estiver presente
   if (cleaned && !cleaned.includes('@c.us')) {
     return `${cleaned}@c.us`;
   }
-  
+
   return cleaned;
 };
 
@@ -38,4 +39,21 @@ export const formatPhoneNumber = (phone: string) => {
 export const validatePhoneNumber = (phone: string) => {
   const cleaned = phone.replace(/\D/g, '');
   return cleaned.length >= 10 && cleaned.length <= 15;
+};
+
+/**
+ * Busca informações detalhadas da sessão conectada
+ */
+export const fetchSessionInfo = async (sessionId: string, apiKey: string, setSessionInfo: (sessionInfo: SessionInfo) => void) => {
+  try {
+    const res = await fetch(api(`/client/getClassInfo/${sessionId}`), {
+      headers: { 'x-api-key': apiKey }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setSessionInfo(data.sessionInfo);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar informações da sessão:', error);
+  }
 };

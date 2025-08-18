@@ -1,20 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { WHATSAPP_STATES, STATUS_CLASS } from "@/utils/consts";
-import { api, getStatusText, formatPhoneNumber, validatePhoneNumber } from "@/utils/functions";
+import { api, getStatusText, formatPhoneNumber, validatePhoneNumber, fetchSessionInfo } from "@/utils/functions";
 import { getDefaultSessionId, getApiKey } from "@/utils/config";
 import { useQRCode } from "@/hooks/useQRCode";
+import { WhatsAppStatus, Message, SessionInfo } from '@/utils/types';
 import './page.css';
 
 export default function Home() {
-  const [status, setStatus] = useState<'connected' | 'waiting' | 'disconnected' | 'reconnecting' | 'uninitialized' | 'loading'>('loading');
-  const [message, setMessage] = useState({ number: "55", message: "" });
+  // ===== ESTADOS =====
+  const [status, setStatus] = useState<WhatsAppStatus>('loading');
+  const [message, setMessage] = useState<Message>({ number: "55", message: "" });
   const [loadingStatus, setLoadingStatus] = useState(false);
-  const [sessionInfo, setSessionInfo] = useState<any>(null);
+  const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [phoneError, setPhoneError] = useState<string>('');
 
-  // Obter ID da sessão e API key da configuração
+  // ===== CONFIGURAÇÕES =====
   const sessionId = getDefaultSessionId();
   const apiKey = getApiKey();
   const headers = {
@@ -22,40 +24,62 @@ export default function Home() {
     'x-api-key': apiKey
   };
 
-  // Usar o novo hook de QR Code
-  const { qrCode, qrImage, isLoading: loadingQR, error: qrError, hasQR, refreshQR } = useQRCode(sessionId, 3000, status);
+  // ===== HOOKS =====
+  const { 
+    qrImage, 
+    isLoading: loadingQR, 
+    error: qrError, 
+    refreshQR,
+    deleteQRCode
+  } = useQRCode(sessionId, 3000, status);
 
-  // Debug: Log do estado do QR Code
+  // ===== EFEITOS =====
+  
+  // Debug: Log do estado do QR Code (apenas quando realmente muda)
   useEffect(() => {
     console.log('🔍 Estado do QR Code atualizado:', {
-      hasQR,
-      qrCode: qrCode ? 'Disponível' : 'Não disponível',
       qrImage: qrImage ? 'Imagem gerada' : 'Sem imagem',
       loadingQR,
       error: qrError,
       sessionId,
       whatsappStatus: status
     });
-  }, [hasQR, qrCode, qrImage, loadingQR, qrError, sessionId, status]);
+  }, [qrImage, loadingQR, qrError, sessionId, status]);
 
-  // Função para verificar o status da sessão
+  // Verificar status da sessão ao carregar a página
+  useEffect(() => {
+    if (loadingStatus) return;
+    checkSessionStatus();
+    
+    // Polling para verificar status a cada 5 segundos
+    const interval = setInterval(checkSessionStatus, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Debug: Log do status da sessão (apenas quando muda)
+  useEffect(() => {
+    console.log("Estado da sessão:", status);
+  }, [status]);
+
+  // ===== FUNÇÕES DE GERENCIAMENTO DE SESSÃO =====
+
+  /**
+   * Verifica o status atual da sessão do WhatsApp
+   */
   const checkSessionStatus = async () => {
     try {
       setLoadingStatus(true);
-      const res = await fetch(api(`/session/status/${sessionId}`), { 
-        headers,
-      });
+      const res = await fetch(api(`/session/status/${sessionId}`), { headers });
       
       if (res.ok) {
         const data = await res.json();
         const state = data.state;
         const message = data.message;
-        console.log("Estado da sessão:", state);
 
         if (state === WHATSAPP_STATES.CONNECTED) {
           setStatus('connected');
-          // Buscar informações da sessão
-          fetchSessionInfo();
+          fetchSessionInfo(sessionId, apiKey, setSessionInfo);
         } else if (
           state === WHATSAPP_STATES.UNPAIRED ||
           state === WHATSAPP_STATES.UNPAIRED_IDLE ||
@@ -84,58 +108,23 @@ export default function Home() {
     }
   };
 
-  // Função para buscar informações da sessão
-  const fetchSessionInfo = async () => {
-    try {
-      const res = await fetch(api(`/client/getClassInfo/${sessionId}`), { 
-        headers: {
-          'x-api-key': apiKey
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSessionInfo(data.sessionInfo);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar informações da sessão:', error);
-    }
-  };
-
-  // Verificar status da sessão ao carregar a página
-  useEffect(() => {
-    checkSessionStatus();
-    
-    // Polling para verificar status a cada 5 segundos
-    const interval = setInterval(checkSessionStatus, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Função para criar nova sessão
-  const handleCreateSession = async () => {
+  /**
+   * Cria uma nova sessão do WhatsApp
+   */
+  const handleCreateSession = useCallback(async () => {
     setStatus('loading');
     
     try {
-      // Primeiro, tentar destruir a sessão existente se houver
-      try {
-        const destroyRes = await fetch(api(`/session/terminate/${sessionId}`), { 
-          method: 'GET', 
-          headers,
-        });
-        
-        if (destroyRes.ok) {
-          console.log('✅ Sessão antiga destruída com sucesso');
-        } else {
-          console.log('⚠️ Não foi possível destruir sessão antiga, continuando...');
-        }
-      } catch (destroyError) {
-        console.log('⚠️ Erro ao destruir sessão antiga, continuando...', destroyError);
-      }
-
+      // Destruir sessão existente se houver
+      await destroyExistingSession();
+      
+      // Deletar QR Code
+      deleteQRCode();
+      
       // Aguardar um pouco para garantir que a sessão antiga foi destruída
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Agora criar a nova sessão
+      // Criar nova sessão
       const res = await fetch(api(`/session/start/${sessionId}`), { 
         method: 'GET', 
         headers,
@@ -155,10 +144,12 @@ export default function Home() {
       alert('Erro ao criar sessão. Tente novamente.');
       setStatus('disconnected');
     }
-  };
+  }, [sessionId, apiKey]); // Otimizado dependências
 
-  // Função para destruir sessão
-  const handleDestroySession = async () => {
+  /**
+   * Destrói a sessão atual
+   */
+  const handleDestroySession = useCallback(async () => {
     try {
       const res = await fetch(api(`/session/terminate/${sessionId}`), { 
         method: 'GET', 
@@ -176,33 +167,25 @@ export default function Home() {
       console.error('Erro ao destruir sessão:', error);
       alert('Erro ao destruir sessão. Tente novamente.');
     }
-  };
+  }, [sessionId, apiKey]); // Otimizado dependências
 
-  // Função para gerar novo QR code
-  const handleGenerateNewQR = async () => {
+  /**
+   * Gera um novo QR Code destruindo a sessão atual
+   */
+  const handleGenerateNewQR = useCallback(async () => {
     setStatus('loading');
     
     try {
-      // Primeiro, tentar destruir a sessão existente se houver
-      try {
-        const destroyRes = await fetch(api(`/session/terminate/${sessionId}`), { 
-          method: 'GET', 
-          headers,
-        });
-        
-        if (destroyRes.ok) {
-          alert('✅ Sessão antiga encerrada para gerar novo QR Code');
-        } else {
-          alert('⚠️ Não foi possível encerrar sessão antiga, continuando...');
-        }
-      } catch (destroyError) {
-        alert('⚠️ Erro ao encerrar sessão antiga, continuando...');
-      }
+      // Destruir sessão existente
+      await destroyExistingSession();
 
+      // Deletar QR Code
+      deleteQRCode();
+      
       // Aguardar um pouco para garantir que a sessão antiga foi destruída
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Agora criar a nova sessão
+      // Criar nova sessão
       const res = await fetch(api(`/session/start/${sessionId}`), { 
         method: 'GET', 
         headers,
@@ -210,7 +193,6 @@ export default function Home() {
       
       if (res.ok) {
         setStatus('uninitialized');
-        // Aguardar um pouco e verificar status
         setTimeout(() => {
           checkSessionStatus();
         }, 2000);
@@ -222,10 +204,34 @@ export default function Home() {
       alert('Erro ao gerar novo QR Code. Tente novamente.');
       setStatus('disconnected');
     }
-  };
+  }, [sessionId, apiKey]); // Otimizado dependências
 
-  // Função para validar número de telefone
-  const validatePhone = (phone: string) => {
+  /**
+   * Função auxiliar para destruir sessão existente
+   */
+  const destroyExistingSession = useCallback(async () => {
+    try {
+      const destroyRes = await fetch(api(`/session/terminate/${sessionId}`), { 
+        method: 'GET', 
+        headers,
+      });
+      
+      if (destroyRes.ok) {
+        console.log('✅ Sessão antiga destruída com sucesso');
+      } else {
+        console.log('⚠️ Não foi possível destruir sessão antiga, continuando...');
+      }
+    } catch (destroyError) {
+      console.log('⚠️ Erro ao destruir sessão antiga, continuando...', destroyError);
+    }
+  }, [sessionId, apiKey]); // Otimizado dependências
+
+  // ===== FUNÇÕES DE VALIDAÇÃO E ENVIO =====
+
+  /**
+   * Valida o número de telefone informado
+   */
+  const checkPhone = (phone: string): boolean => {
     if (!phone) {
       setPhoneError('Número de telefone é obrigatório');
       return false;
@@ -240,14 +246,16 @@ export default function Home() {
     return true;
   };
 
-  // Função para enviar mensagem de teste
-  const handleSendTest = async () => {
+  /**
+   * Envia mensagem de teste para o número especificado
+   */
+  const handleSendTest = useCallback(async () => {
     if (!message.message.trim()) {
       alert('Por favor, preencha a mensagem.');
       return;
     }
 
-    if (!validatePhone(message.number)) {
+    if (!checkPhone(message.number)) {
       return;
     }
 
@@ -288,139 +296,174 @@ export default function Home() {
       console.error('Erro ao enviar mensagem:', error);
       alert('Erro ao enviar mensagem. Tente novamente.');
     }
+  }, [message.message, message.number, status, sessionInfo, sessionId, apiKey]); // Otimizado dependências
+
+  // ===== COMPONENTES DE INTERFACE =====
+
+  /**
+   * Componente para exibir informações da sessão
+   */
+  const SessionInfoDisplay = () => {
+    if (status !== 'connected' || !sessionInfo) return null;
+    
+    return (
+      <div className="session-info">
+        <h3>Informações da Sessão</h3>
+        <p><strong>Nome:</strong> {sessionInfo.pushname || 'N/A'}</p>
+        <p><strong>Telefone:</strong> {sessionInfo.wid?.user || 'N/A'}</p>
+        <p><strong>Plataforma:</strong> {sessionInfo.platform || 'N/A'}</p>
+        <p><strong>ID da Sessão:</strong> {sessionId}</p>
+      </div>
+    );
   };
 
+  /**
+   * Componente para exibir botões de ação
+   */
+  const ActionButtons = () => (
+    <div className="button-group">
+      {status === 'connected' && (
+        <button onClick={handleDestroySession} className="button red">
+          Destruir Sessão
+        </button>
+      )}
+      
+      {status === 'disconnected' && (
+        <button onClick={handleCreateSession} className="button blue">
+          Criar/Recriar Sessão
+        </button>
+      )}
+    </div>
+  );
+
+  /**
+   * Componente para exibir o QR Code
+   */
+  const QRCodeDisplay = () => {
+    // Mostrar QR Code quando há imagem OU quando está aguardando conexão
+    if (status !== 'waiting' && status !== 'uninitialized') return null;
+
+    return (
+      <div className="qrcode-box">
+        <h3>📱 Escaneie o QR Code</h3>
+        <p className="qr-instructions">
+          Abra o WhatsApp no seu celular e escaneie o código abaixo
+        </p>
+        
+        <div className="qr-container">
+          {qrImage ? (
+            <img 
+              src={qrImage} 
+              alt="QR Code WhatsApp" 
+              className="qrcode" 
+            />
+          ) : (
+            <div className="qr-placeholder">
+              <span className="qr-icon">📱</span>
+              <p>
+                {status === 'waiting' ? 'Aguardando QR Code...' : 'Gerando QR Code...'}
+              </p>
+            </div>
+          )}
+        </div>
+        
+        <div className="qr-actions">
+          <p className="qr-info">
+            {qrImage ? 'QR Code válido por 2 minutos' : 'QR Code sendo gerado...'}
+          </p>
+          <button onClick={refreshQR} className="button blue">
+            Atualizar QR Code
+          </button>
+          <button onClick={handleGenerateNewQR} className="button gray">
+            Recriar Sessão
+          </button>
+          <p className="qr-note">
+            Recriar Sessão irá destruir a atual e gerar um novo QR Code
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  /**
+   * Componente para exibir erros do QR Code
+   */
+  const QRCodeError = () => {
+    if (!qrError) return null;
+
+    return (
+      <div className="qrcode-box error">
+        <div className="error-qr">
+          <span className="error-icon">❌</span>
+          <p className="error-message">{qrError}</p>
+          <button onClick={refreshQR} className="button blue">
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  /**
+   * Componente para o formulário de envio de mensagem
+   */
+  const MessageForm = () => {
+    if (status !== 'connected') return null;
+
+    return (
+      <div className="form">
+        <h3>Enviar Mensagem de Teste</h3>
+        <div className="input-group">
+          <input
+            value={message.number}
+            onChange={(e) => {
+              setMessage({ number: e.target.value, message: message.message });
+              if (phoneError) setPhoneError('');
+            }}
+            placeholder="Número (ex: 5511999999999)"
+            className={`input ${phoneError ? 'error' : ''}`}
+          />
+          {phoneError && <span className="error-message">{phoneError}</span>}
+        </div>
+        <textarea
+          value={message.message}
+          onChange={(e) => setMessage({ number: message.number, message: e.target.value })}
+          placeholder="Mensagem de teste"
+          className="textarea"
+        />
+        <button onClick={handleSendTest} className="button green">
+          Enviar Mensagem de Teste
+        </button>
+      </div>
+    );
+  };
+
+  // ===== RENDERIZAÇÃO PRINCIPAL =====
+  
   return (
     <div className="container">
       <h1 className="title">GeoView Conexão com WhatsApp</h1>
 
+      {/* Status da conexão */}
       <div className={`status ${STATUS_CLASS[status]}`}>
         {getStatusText(status)}
         {loadingStatus && <span className="loading-indicator">🔄</span>}
       </div>
 
-      {/* Informações da sessão quando conectado */}
-      {status === 'connected' && sessionInfo && (
-        <div className="session-info">
-          <h3>Informações da Sessão</h3>
-          <p><strong>Nome:</strong> {sessionInfo.pushname || 'N/A'}</p>
-          <p><strong>Telefone:</strong> {sessionInfo.wid?.user || 'N/A'}</p>
-          <p><strong>Plataforma:</strong> {sessionInfo.platform || 'N/A'}</p>
-          <p><strong>ID da Sessão:</strong> {sessionId}</p>
-        </div>
-      )}
+      {/* Informações da sessão */}
+      <SessionInfoDisplay />
 
-      <div className="button-group">
-        {status === 'connected' && (
-          <button onClick={handleDestroySession} className="button red">
-            Destruir Sessão
-          </button>
-        )}
-        
-        {status === 'disconnected' && (
-          <button
-            onClick={handleCreateSession}
-            className="button blue"
-          >
-            Criar/Recriar Sessão
-          </button>
-        )}
-      </div>
+      {/* Botões de ação */}
+      <ActionButtons />
 
-      {/* QR Code - Nova implementação */}
-      {hasQR && qrCode && (
-        <div className="qrcode-box">
-          <h3>📱 Escaneie o QR Code</h3>
-          <p className="qr-instructions">
-            Abra o WhatsApp no seu celular e escaneie o código abaixo
-          </p>
-          
-          <div className="qr-container">
-            {qrImage ? (
-              <img 
-                src={qrImage} 
-                alt="QR Code WhatsApp" 
-                className="qrcode" 
-              />
-            ) : (
-              <div className="qr-placeholder">
-                <span className="qr-icon">📱</span>
-                <p>Gerando QR Code...</p>
-              </div>
-            )}
-          </div>
-          
-          <div className="qr-actions">
-            <p className="qr-info">QR Code válido por 2 minutos</p>
-            <button
-              onClick={refreshQR}
-              className="button blue"
-            >
-              Atualizar QR Code
-            </button>
-            <button
-              onClick={handleGenerateNewQR}
-              className="button gray"
-            >
-              Recriar Sessão
-            </button>
-            <p className="qr-note">Recriar Sessão irá destruir a atual e gerar um novo QR Code</p>
-          </div>
-        </div>
-      )}
+      {/* QR Code e componentes relacionados */}
+      <QRCodeDisplay />
+      <QRCodeError />
 
-      {/* Status de carregamento do QR Code */}
-      {loadingQR && (
-        <div className="qrcode-box">
-          <div className="loading-qr">
-            <div className="spinner"></div>
-            <p>Carregando QR Code...</p>
-          </div>
-        </div>
-      )}
+      {/* Formulário de mensagem */}
+      <MessageForm />
 
-      {/* Erro no QR Code */}
-      {qrError && (
-        <div className="qrcode-box error">
-          <div className="error-qr">
-            <span className="error-icon">❌</span>
-            <p className="error-message">{qrError}</p>
-            <button onClick={refreshQR} className="button blue">
-              Tentar Novamente
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Formulário de mensagem de teste */}
-      {status === 'connected' && (
-        <div className="form">
-          <h3>Enviar Mensagem de Teste</h3>
-          <div className="input-group">
-            <input
-              value={message.number}
-              onChange={(e) => {
-                setMessage({ number: e.target.value, message: message.message });
-                if (phoneError) setPhoneError('');
-              }}
-              placeholder="Número (ex: 5511999999999)"
-              className={`input ${phoneError ? 'error' : ''}`}
-            />
-            {phoneError && <span className="error-message">{phoneError}</span>}
-          </div>
-          <textarea
-            value={message.message}
-            onChange={(e) => setMessage({ number: message.number, message: e.target.value })}
-            placeholder="Mensagem de teste"
-            className="textarea"
-          />
-          <button onClick={handleSendTest} className="button green">
-            Enviar Mensagem de Teste
-          </button>
-        </div>
-      )}
-
-      {/* Botão para verificar status manualmente */}
+      {/* Verificação manual de status */}
       <div className="manual-check">
         <button 
           onClick={checkSessionStatus} 

@@ -10,3 +10,15 @@ export interface ClientContact {
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+export type WhatsAppStatus = 'connected' | 'waiting' | 'disconnected' | 'reconnecting' | 'uninitialized' | 'loading';
+
+export interface Message {
+  number: string;
+  message: string;
+}
+export interface SessionInfo {
+  pushname?: string;
+  wid?: { user: string };
+  platform?: string;
+}
