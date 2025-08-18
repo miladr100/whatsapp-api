@@ -1,5 +1,5 @@
 # Use the official Node.js Alpine image as the base image
-FROM node:14-alpine
+FROM node:20-alpine
 
 # Set the working directory
 WORKDIR /usr/src/app
@@ -26,7 +26,7 @@ RUN npm ci --only=production --ignore-scripts
 COPY . .
 
 # Expose the port the API will run on
-EXPOSE 3000
+EXPOSE 3001
 
 # Start the API
 CMD ["npm", "start"]

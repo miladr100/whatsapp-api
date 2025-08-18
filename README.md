@@ -1,176 +1,342 @@
-# WhatsApp REST API
+# 🤖 WhatsApp API - Sistema Completo de Automação
 
-REST API wrapper for the [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) library, providing an easy-to-use interface to interact with the WhatsApp Web platform. 
-It is designed to be used as a docker container, scalable, secure, and easy to integrate with other non-NodeJs projects.
+Sistema completo de automação do WhatsApp com backend de processamento de mensagens e frontend moderno em Next.js.
 
-This project is a work in progress: star it, create issues, features or pull requests ❣️
+## 🏗️ Arquitetura do Projeto
 
-**NOTE**: I can't guarantee you will not be blocked by using this method, although it has worked for me. WhatsApp does not allow bots or unofficial clients on their platform, so this shouldn't be considered totally safe.
+```
+whatsapp-api/
+├── 📱 src/                    # API principal do WhatsApp
+├── 🚀 message-server/         # Servidor de processamento de mensagens
+├── 🎨 front-nextjs/          # Frontend em Next.js
+├── 🐳 docker-compose.yml     # Configuração Docker
+└── 📚 docs/                  # Documentação
+```
 
-## Table of Contents
+## 🚀 Tecnologias Utilizadas
 
-[1. Quick Start with Docker](#quick-start-with-docker)
+### Backend Principal (WhatsApp API)
+- **Node.js** + **Express**
+- **WhatsApp Web JS** para conexão com WhatsApp
+- **MongoDB** + **Mongoose** para persistência
+- **Swagger** para documentação da API
 
-[2. Features](#features)
+### Message Server
+- **Node.js** + **Express** + **TypeScript**
+- **MongoDB** para armazenamento de contatos
+- **Integração com Monday.com** para automação
+- **Processamento inteligente** de mensagens
 
-[3. Run Locally](#run-locally)
+### Frontend
+- **Next.js 14** com **TypeScript**
+- **React Hooks** para gerenciamento de estado
+- **QR Code** em tempo real para conexão
+- **Interface moderna** e responsiva
 
-[4. Testing](#testing)
+## 📋 Pré-requisitos
 
-[5. Documentation](#documentation)
+- **Node.js** 18+ 
+- **MongoDB** 6+
+- **WhatsApp** ativo no celular
+- **Conta Monday.com** (para automação)
 
-[6. Deploy to Production](#deploy-to-production)
+## 🛠️ Instalação
 
-[7. Contributing](#contributing)
-
-[8. License](#license)
-
-[9. Star History](#star-history)
-
-## Quick Start with Docker
-
-[![dockeri.co](https://dockerico.blankenship.io/image/chrishubert/whatsapp-web-api)](https://hub.docker.com/r/chrishubert/whatsapp-web-api)
-
-1. Clone the repository:
-
+### 1. Clone o repositório
 ```bash
-git clone https://github.com/chrishubert/whatsapp-api.git
+git clone https://github.com/seu-usuario/whatsapp-api.git
 cd whatsapp-api
 ```
 
-3. Run the Docker Compose:
-
-```bash
-docker-compose pull && docker-compose up
-```
-4. Visit http://localhost:3000/session/start/ABCD
-
-5. Scan the QR on your console using WhatsApp mobile app -> Linked Device -> Link a Device (it may take time to setup the session)
-
-6. Visit http://localhost:3000/client/getContacts/ABCD
-
-7. EXTRA: Look at all the callbacks data in `./session/message_log.txt`
-
-![Quick Start](./assets/basic_start.gif)
-
-## Features
-
-1. API and Callbacks
-
-| Actions                      | Status | Sessions                                | Status | Callbacks                                      | Status |
-| ----------------------------| ------| ----------------------------------------| ------| ----------------------------------------------| ------|
-| Send Image Message           | ✅     | Initiate session                       | ✅    | Callback QR code                               | ✅     |
-| Send Video Message           | ✅     | Terminate session                      | ✅    | Callback new message                           | ✅     |
-| Send Audio Message           | ✅     | Terminate inactive sessions            | ✅    | Callback status change                         | ✅     |
-| Send Document Message        | ✅     | Terminate all sessions                 | ✅    | Callback message media attachment              | ✅     |
-| Send File URL                | ✅     | Healthcheck                            | ✅    |                                                |        |
-| Send Button Message          | ✅     | Local test callback                    |        |                                                |        |
-| Send Contact Message         | ✅     |                                        |        |                                                |        |
-| Send List Message            | ✅     |                                        |        |                                                |        |
-| Set Status                   | ✅     |                                        |        |                                                |        |
-| Send Button With Media       | ✅     |                                        |        |                                                |        |
-| Is On Whatsapp?              | ✅     |                                        |        |                                                |        |
-| Download Profile Pic         | ✅     |                                        |        |                                                |        |
-| User Status                  | ✅     |                                        |        |                                                |        |
-| Block/Unblock User           | ✅     |                                        |        |                                                |        |
-| Update Profile Picture       | ✅     |                                        |        |                                                |        |
-| Create Group                 | ✅     |                                        |        |                                                |        |
-| Leave Group                  | ✅     |                                        |        |                                                |        |
-| All Groups                   | ✅     |                                        |        |                                                |        |
-| Invite User                  | ✅     |                                        |        |                                                |        |
-| Make Admin                   | ✅     |                                        |        |                                                |        |
-| Demote Admin                 | ✅     |                                        |        |                                                |        |
-| Group Invite Code            | ✅     |                                        |        |                                                |        |
-| Update Group Participants    | ✅     |                                        |        |                                                |        |
-| Update Group Setting         | ✅     |                                        |        |                                                |        |
-| Update Group Subject         | ✅     |                                        |        |                                                |        |
-| Update Group Description     | ✅     |                                        |        |                                                |        |
-
-3. Handle multiple client sessions (session data saved locally), identified by unique id
-
-4. All endpoints may be secured by a global API key
-
-5. On server start, all existing sessions are restored
-
-6. Set messages automatically as read
-
-7. Disable any of the callbacks
-
-## Run Locally
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/chrishubert/whatsapp-api.git
-cd whatsapp-api
-```
-
-2. Install the dependencies:
-
+### 2. Instale as dependências do projeto principal
 ```bash
 npm install
 ```
 
-3. Copy the `.env.example` file to `.env` and update the required environment variables:
-
+### 3. Configure as variáveis de ambiente
 ```bash
+# Copie o arquivo de exemplo
 cp .env.example .env
+
+# Edite com suas configurações
+nano .env
 ```
 
-4. Run the application:
-
+### 4. Configure o Message Server
 ```bash
-npm run start
+cd message-server
+npm install
+cp .env.example .env
+# Configure as variáveis do message-server
 ```
 
-5. Access the API at `http://localhost:3000`
-
-## Testing
-
-Run the test suite with the following command:
-
+### 5. Configure o Frontend
 ```bash
-npm run test
+cd front-nextjs
+npm install
+cp env.example .env
+# Configure as variáveis do frontend
 ```
 
-## Documentation
+## ⚙️ Configuração das Variáveis de Ambiente
 
-API documentation can be found in the [`swagger.json`](https://raw.githubusercontent.com/chrishubert/whatsapp-api/master/swagger.json) file. See this file directly into [Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/chrishubert/whatsapp-api/master/swagger.json) or any other OpenAPI-compatible tool to view and interact with the API documentation.
+### Projeto Principal (.env)
+```env
+# MongoDB
+MONGO_URL=mongodb://localhost:27017/whatsapp-api
 
-This documentation is straightforward if you are familiar with whatsapp-web.js library (https://docs.wwebjs.dev/)
-If you are still confused - open an issue and I'll improve it.
+# WhatsApp
+WHATSAPP_SERVER_PORT=3001
 
-Also, there is an option to run the documentation endpoint locally by setting the `ENABLE_SWAGGER_ENDPOINT` environment variable. Restart the service and go to `/api-docs` endpoint to see it.
+# API
+API_KEY=sua_api_key_aqui
+```
 
-By default, all callback events are delivered to the webhook defined with the `BASE_WEBHOOK_URL` environment variable.
-This can be overridden by setting the `*_WEBHOOK_URL` environment variable, where `*` is your sessionId.
-For example, if you have the sessionId defined as `DEMO`, the environment variable must be `DEMO_WEBHOOK_URL`.
+### Message Server (.env)
+```env
+# MongoDB
+MONGO_URL=mongodb://localhost:27017/whatsapp-api
 
-By setting the `DISABLED_CALLBACKS` environment variable you can specify what events you are **not** willing to receive on your webhook.
+# Frontend URLs
+FRONT_URL_DEV=http://localhost:3000
+FRONT_URL_PROD=https://seu-dominio.com
 
-### Scanning QR code
+# Monday.com
+MONDAY_API_TOKEN=seu_token_aqui
 
-In order to validate a new WhatsApp Web instance you need to scan the QR code using your mobile phone. Official documentation can be found at (https://faq.whatsapp.com/1079327266110265/?cms_platform=android) page. The service itself delivers the QR code content as a webhook event or you can use the REST endpoints (`/session/qr/:sessionId` or `/session/qr/:sessionId/image` to get the QR code as a png image). 
+# Ambiente
+ENVIRONMENT=dev
+MESSAGE_PORT=3002
+API_KEY=sua_api_key_aqui
+```
 
-## Deploy to Production
+### Frontend (.env)
+```env
+# Message Server
+NEXT_PUBLIC_MESSAGE_API_BASE_URL_LOCAL=http://localhost:3002
 
-- Load the docker image in docker-compose, or your Kubernetes environment
-- Disable the `ENABLE_LOCAL_CALLBACK_EXAMPLE` environment variable
-- Set the `API_KEY` environment variable to protect the REST endpoints
-- Run periodically the `/api/terminateInactiveSessions` endpoint to prevent useless sessions to take up space and resources(only in case you are not in control of the sessions)
+# WhatsApp API
+NEXT_PUBLIC_WHATSAPP_API_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_API_KEY=sua_api_key_aqui
+```
 
-## Contributing
+## 🚀 Executando o Projeto
 
-Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+### 1. Inicie o MongoDB
+```bash
+# Via Docker
+docker-compose up -d mongodb
 
-## Disclaimer
+# Ou localmente
+mongod
+```
 
-This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp or any of its subsidiaries or its affiliates. The official WhatsApp website can be found at https://whatsapp.com. "WhatsApp" as well as related names, marks, emblems and images are registered trademarks of their respective owners.
+### 2. Inicie a API Principal do WhatsApp
+```bash
+# Terminal 1
+npm run dev
+# Servidor rodando na porta 3001
+```
 
-## License
+### 3. Inicie o Message Server
+```bash
+# Terminal 2
+cd message-server
+npm run dev
+# Servidor rodando na porta 3002
+```
 
-This project is licensed under the MIT License - see the [LICENSE.md](./LICENSE.md) file for details.
+### 4. Inicie o Frontend
+```bash
+# Terminal 3
+cd front-nextjs
+npm run dev
+# Frontend rodando na porta 3000
+```
 
-## Star History
+## 📱 Como Usar
 
-[![Star History Chart](https://api.star-history.com/svg?repos=chrishubert/whatsapp-api&type=Date)](https://star-history.com/#chrishubert/whatsapp-api&Date)
+### 1. Acesse o Frontend
+Abra `http://localhost:3000` no navegador
+
+### 2. Conecte o WhatsApp
+- Clique em "Criar Nova Sessão"
+- Escaneie o QR Code com seu WhatsApp
+- Aguarde a conexão ser estabelecida
+
+### 3. Teste o Sistema
+- Envie uma mensagem para o número conectado
+- O sistema processará automaticamente
+- Respostas serão enviadas via WhatsApp
+
+## 🔄 Fluxo de Funcionamento
+
+```
+1. 📱 Usuário envia mensagem → WhatsApp
+2. 🌐 WhatsApp → Webhook → API Principal
+3. 🔄 API Principal → Message Server
+4. 🧠 Message Server processa mensagem
+5. 📤 Message Server → API Principal → WhatsApp
+6. 💬 Usuário recebe resposta
+```
+
+## 🎯 Funcionalidades
+
+### ✅ WhatsApp
+- **Conexão automática** via QR Code
+- **Múltiplas sessões** simultâneas
+- **Webhooks em tempo real**
+- **Envio de mensagens** programático
+
+### ✅ Processamento de Mensagens
+- **Análise inteligente** do conteúdo
+- **Fluxos conversacionais** automáticos
+- **Integração com Monday.com**
+- **Histórico de conversas**
+
+### ✅ Frontend
+- **Interface moderna** e responsiva
+- **Status de conexão** em tempo real
+- **Gerenciamento de sessões**
+- **QR Code dinâmico**
+
+## 🧪 Testes
+
+### Testar a API
+```bash
+# Verificar status
+curl http://localhost:3001/client/getState/sessao123
+
+# Enviar mensagem
+curl -X POST http://localhost:3001/client/sendMessage/sessao123 \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: sua_api_key" \
+  -d '{"chatId":"5511999999999@c.us","contentType":"string","content":"Teste"}'
+```
+
+### Testar o Message Server
+```bash
+curl http://localhost:3002/api/ping
+```
+
+## 🐳 Docker
+
+### Executar com Docker Compose
+```bash
+# Iniciar todos os serviços
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar serviços
+docker-compose down
+```
+
+## 📊 Monitoramento
+
+### Logs dos Serviços
+- **API Principal**: `logs/whatsapp-api.log`
+- **Message Server**: `message-server/logs/`
+- **Frontend**: Console do navegador
+
+### Status das Conexões
+- **WhatsApp**: `/client/getState/{sessionId}`
+- **Message Server**: `/api/ping`
+- **Frontend**: Interface visual
+
+## 🔧 Desenvolvimento
+
+### Estrutura de Pastas
+```
+message-server/
+├── routes/           # Rotas da API
+├── models/           # Modelos MongoDB
+├── utils/            # Utilitários
+└── schemas/          # Schemas de validação
+
+front-nextjs/
+├── src/
+│   ├── app/          # Páginas Next.js
+│   ├── components/   # Componentes React
+│   ├── hooks/        # Custom Hooks
+│   └── utils/        # Utilitários
+└── public/           # Arquivos estáticos
+```
+
+### Scripts de Desenvolvimento
+```bash
+# Projeto principal
+npm run dev          # Desenvolvimento
+npm run build        # Build de produção
+
+# Message Server
+cd message-server
+npm run dev          # Desenvolvimento com TSX
+npm run build        # Build TypeScript
+
+# Frontend
+cd front-nextjs
+npm run dev          # Desenvolvimento Next.js
+npm run build        # Build de produção
+```
+
+## 🚨 Troubleshooting
+
+### Problemas Comuns
+
+#### QR Code não aparece
+- Verifique se o servidor está rodando
+- Confirme as variáveis de ambiente
+- Verifique os logs do servidor
+
+#### Mensagens não são processadas
+- Confirme conexão com MongoDB
+- Verifique logs do Message Server
+- Confirme integração com Monday.com
+
+#### Frontend não carrega
+- Verifique se Next.js está rodando
+- Confirme variáveis de ambiente
+- Verifique console do navegador
+
+### Logs de Debug
+```bash
+# API Principal
+tail -f logs/whatsapp-api.log
+
+# Message Server
+cd message-server && tail -f logs/app.log
+
+# Frontend
+# Ver console do navegador
+```
+
+## 🤝 Contribuindo
+
+1. **Fork** o projeto
+2. **Crie** uma branch para sua feature
+3. **Commit** suas mudanças
+4. **Push** para a branch
+5. **Abra** um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE.md](LICENSE.md) para mais detalhes.
+
+## 📞 Suporte
+
+- **Issues**: [GitHub Issues](https://github.com/seu-usuario/whatsapp-api/issues)
+- **Documentação**: [Wiki do Projeto](https://github.com/seu-usuario/whatsapp-api/wiki)
+- **Email**: seu-email@exemplo.com
+
+## 🙏 Agradecimentos
+
+- **WhatsApp Web JS** pela biblioteca de conexão
+- **Next.js** pelo framework frontend
+- **MongoDB** pelo banco de dados
+- **Monday.com** pela integração
+
+---
+
+**⭐ Se este projeto te ajudou, considere dar uma estrela!**
