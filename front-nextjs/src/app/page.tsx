@@ -124,7 +124,7 @@ export default function ContactsPage() {
             <p><strong>ID da Sessão:</strong> {sessionId}</p>
             <a href={`${apiBaseUrl}/dashboard`} target="_blank" rel="noopener noreferrer">
               <button className="form-button add">
-                Verificar Conexão
+                Dashboard
               </button>
             </a>
           </>
