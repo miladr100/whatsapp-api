@@ -7,6 +7,10 @@ const router = express.Router();
 router.post("/", async (req: Request, res: Response) => {
   const { taskName, columnValues, boardId, groupId } = req.body;
 
+  if (!MONDAY_API_TOKEN) {
+    return res.status(400).json({ message: "O token não encontrado." });
+  }
+
   if (!taskName) {
     return res.status(400).json({ message: "O nome da tarefa é obrigatório." });
   }

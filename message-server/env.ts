@@ -31,3 +31,4 @@ export const MONDAY_API_TOKEN = getEnvVar('MONDAY_API_TOKEN');
 export const ENVIRONMENT = getEnvVar('ENVIRONMENT', 'dev');
 export const MESSAGE_PORT = getEnvVar('MESSAGE_PORT', '3002');
 export const API_KEY = process.env.API_KEY!;
+export const WHATSAPP_API_BASE_URL = process.env.WHATSAPP_API_BASE_URL!;

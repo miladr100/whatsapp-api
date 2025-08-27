@@ -18,7 +18,6 @@ export interface Message {
   message: string;
 }
 export interface SessionInfo {
-  pushname?: string;
-  wid?: { user: string };
-  platform?: string;
+  pushName?: string;
+  id?: string;
 }

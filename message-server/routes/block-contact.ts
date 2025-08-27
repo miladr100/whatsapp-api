@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 const router = express.Router();
 import { MESSAGE_PORT } from '../env';
 
-const API_BASE_URL = `http://localhost:${MESSAGE_PORT}`
+const API_URL = `http://localhost:${MESSAGE_PORT}`;
 
 // POST /api/contacts
 router.post("/", async (req: Request, res: Response) => {
@@ -21,7 +21,7 @@ router.post("/", async (req: Request, res: Response) => {
         status: "bloqueado",
         block: true,
     };
-    await fetch(`${API_BASE_URL}/api/contacts`, {
+    await fetch(`${API_URL}/api/contacts`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newContact),

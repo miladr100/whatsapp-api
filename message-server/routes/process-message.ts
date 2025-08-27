@@ -1,116 +1,96 @@
 import express from 'express';
 import { processIncomingMessage } from '../utils/functions';
-import { FRONT_URL, ENVIRONMENT } from '../env';
 
 const router = express.Router();
 
-// Função para enviar webhook para o frontend
-async function forwardWebhookToFrontend(webhookData: any) {
+router.post("/", async (req, res) => {
   try {
-    // Usar a URL correta do frontend baseada no ambiente
-    const webhookUrl = `${FRONT_URL}/api/webhook`;
-        
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookData)
-    });
+    // 🔎 Tenta identificar formato WAHA
+    const isWaha = req.body && req.body.event === "message" && req.body.payload;
 
-    if (response.ok) {
-      console.log('✅ Webhook enviado com sucesso para o frontend');
-    } else {
-      const errorData = await response.json();
-      console.error('❌ Erro ao enviar webhook para o frontend:', response.status, errorData);
-    }
-  } catch (error) {
-    console.error('❌ Erro ao encaminhar webhook para o frontend:', error);
-  }
-}
-
-router.post('/', async (req, res) => {
-  try {
-    // 🔄 ENVIAR WEBHOOK ORIGINAL PARA O FRONTEND
-    // Encaminhar o webhook exatamente como recebido, sem modificar
-    forwardWebhookToFrontend(req.body);
-
-    // Verificar se é uma chamada do webhook ou direta
-    const isWebhookCall = req.body.dataType === 'message';
-    
     let from: string;
-    let body: string;
+    let bodyText: string;
     let name: string;
-    let type: string;
+    let type: "chat" | "media" | string;
     let messageId: string;
     let sessionId: string;
 
-    if (isWebhookCall) {
-      // Chamada do webhook - extrair dados da mensagem
-      const messageData = req.body.data?.message;
-      
-      if (!messageData) {
-        return res.status(400).json({ 
-          error: 'Dados da mensagem não encontrados no webhook' 
-        });
+    if (isWaha) {
+      // --------- Webhook WAHA ---------
+      const payload = req.body.payload;
+      if (!payload) {
+        return res.status(400).json({ error: "Payload ausente no webhook" });
       }
 
-      // Extrair dados da mensagem do WhatsApp
-      from = messageData.from;
-      type = messageData.type;
-      body = type === 'chat' ? (messageData.body || messageData.text || '') : '';
-      name = messageData._data?.notifyName || messageData.from?.split('@')[0] || 'Desconhecido';
-      messageId = messageData.id?._serialized || messageData.id || Date.now().toString();
-      sessionId = req.body.sessionId || 'default';
-      
-      console.log("📱 Mensagem recebida via webhook:", {
+      from = String(payload.from || "");
+      bodyText = String(payload.body || "");
+      const hasMedia = !!payload.hasMedia;
+      type = hasMedia ? "media" : "chat";
+      messageId = String(payload.id || Date.now().toString());
+      sessionId = String(req.body.session || "default");
+
+      // Nome do remetente: tenta notifyName, depois parte do JID, depois fallback
+      name =
+        payload._data?.notifyName ||
+        from.split("@")[0] ||
+        req.body.me?.pushName ||
+        "Desconhecido";
+
+      if (!from) {
+        return res.status(400).json({ error: "Campo 'from' ausente no webhook" });
+      }
+
+      // Logs úteis (curtos)
+      console.log("📥 WAHA webhook:", {
         from,
-        body: body.substring(0, 50) + (body.length > 50 ? '...' : ''),
+        body: bodyText.slice(0, 80),
+        type,
       });
     } else {
-      // Chamada direta - usar dados do body
-      from = req.body.from;
-      type = req.body.type;
-      body = type === 'chat' ? req.body.body : '';
-      name = req.body.name;
-      messageId = req.body.messageId;
-      sessionId = req.body.sessionId || 'default';
+      // --------- Chamada direta (REST) ---------
+      from = String(req.body.from || "");
+      bodyText = String(req.body.body || "");
+      type = String(req.body.type || "chat");
+      messageId = String(req.body.messageId || Date.now().toString());
+      sessionId = String(req.body.sessionId || "default");
+      name = String(req.body.name || from.split("@")[0] || "Desconhecido");
 
-      if (!from || !body || !name || !messageId) {
-        return res.status(400).json({ 
-          error: 'Dados obrigatórios: from, body, name, messageId' 
+      if (!from || !bodyText) {
+        return res.status(400).json({
+          error: "Campos obrigatórios ausentes (from, body)",
         });
       }
 
-      console.log("📱 Mensagem recebida diretamente:", {
+      console.log("📥 Direct call:", {
         from,
-        body: body.substring(0, 50) + (body.length > 50 ? '...' : ''),
-        sessionId
+        body: bodyText.slice(0, 80),
+        type,
+        sessionId,
       });
     }
-    
-    // Processa a mensagem de forma assíncrona
-    processIncomingMessage(from, body, name, type, messageId, sessionId);
 
-    // Responde imediatamente para não bloquear o WhatsApp
-    return res.json({ 
-      success: true, 
-      message: 'Mensagem recebida para processamento',
-      source: isWebhookCall ? 'webhook' : 'direct',
+    // ✅ Envia para processamento (não aguarda)
+    // Ajuste a assinatura se seu processador aceitar um objeto
+    processIncomingMessage(from, bodyText, name, type, messageId, sessionId);
+
+    // ✅ Responde imediatamente para não bloquear o provedor do webhook
+    return res.json({
+      success: true,
+      source: isWaha ? "webhook" : "direct",
       data: {
         from,
         name,
         type,
         messageId,
         sessionId,
-        bodyLength: body.length
-      }
+        hasText: bodyText.length > 0,
+      },
     });
   } catch (err) {
-    console.error('❌ Erro ao processar mensagem:', err);
-    return res.status(500).json({ 
-      error: 'Erro interno do servidor',
-      details: err instanceof Error ? err.message : 'Erro desconhecido'
+    console.error("❌ Erro ao processar mensagem:", err);
+    return res.status(500).json({
+      error: "Erro interno do servidor",
+      details: err instanceof Error ? err.message : "Erro desconhecido",
     });
   }
 });

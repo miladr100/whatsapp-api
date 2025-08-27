@@ -1,15 +1,21 @@
 import { IClientContact } from '../models/ClientContact';
 import { PROPOSAL_OPTIONS, SERVICE_FORM, BOARD_CODES } from "./consts";
-import { MESSAGE_PORT, API_KEY } from '../env';
+import { API_KEY, WHATSAPP_API_BASE_URL, MESSAGE_PORT } from '../env';
 
-const API_BASE_URL = `http://localhost:${MESSAGE_PORT}`
+const API_URL = `http://localhost:${MESSAGE_PORT}`;
+
+/** Normaliza chatId do WhatsApp (aceita '5567...@c.us' ou só número) */
+function toChatId(id: string) {
+  const onlyDigits = id.replace(/\D/g, "");
+  return id.includes("@c.us") ? id : `${onlyDigits}@c.us`;
+}
 
 async function createMondayTask(name: string, boardId: number, groupId: string, boardCode: string) {
   const date = new Date();
   const year = date.getFullYear();
   const shortYear = year.toString().slice(-2);
   try {
-    const response = await fetch(`${API_BASE_URL}/api/create-monday-task`, {
+    const response = await fetch(`${API_URL}/api/create-monday-task`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -40,7 +46,7 @@ async function createMondayTaskComment(phone: string, name: string, form: string
   }).format(data);
   const comment = `Proposta enviada por ${name} (${phone})\n\nData: ${beautifiedDate}\n\n${form}`;
   try {
-    const response = await fetch(`${API_BASE_URL}/api/add-monday-comment`, {
+    const response = await fetch(`${API_URL}/api/add-monday-comment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -83,7 +89,7 @@ async function handleMondayNewTask(phone: string, name: string, form: string, ta
 
 async function createNewContact(name: string, number: string) {
   try {
-    await fetch(`${API_BASE_URL}/api/contacts`, {
+    await fetch(`${API_URL}/api/contacts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -99,7 +105,7 @@ async function createNewContact(name: string, number: string) {
 
 async function updateContact(number: string, content: string, service: string, status: string, boardId?: string, groupId?: string) {
   try {
-    await fetch(`${API_BASE_URL}/api/contacts`, {
+    await fetch(`${API_URL}/api/contacts`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(
@@ -217,19 +223,23 @@ async function sendResponseToWhatsApp(sessionId: string, response: {
       return;
     }
 
-    const whatsappApiUrl = `${process.env.WHATSAPP_API_BASE_URL}/client/sendMessage/${sessionId}`;
+    const whatsappApiUrl = `${WHATSAPP_API_BASE_URL}/api/sendText`;
     
     const requestBody = {
-      chatId: response.to,
-      contentType: 'string',
-      content: response.message
+      chatId: toChatId(response.to),
+      reply_to: null,
+      text: response.message,
+      linkPreview: false,
+      linkPreviewHighQuality: false,
+      session: sessionId,
     };
 
     const apiResponse = await fetch(whatsappApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY
+        'x-api-key': API_KEY,
+        "Accept": "application/json",
       },
       body: JSON.stringify(requestBody)
     });
@@ -253,7 +263,7 @@ export async function processIncomingMessage(
 ) {
   let contactData: IClientContact | null = null;
   try {
-    const response = await fetch(`${API_BASE_URL}/api/contacts?phone=${from}`);
+    const response = await fetch(`${API_URL}/api/contacts?phone=${from}`);
     contactData = await response.json();
   } catch (err) {
     console.error("Erro ao buscar contato:", err);

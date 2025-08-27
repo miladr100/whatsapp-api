@@ -4,10 +4,10 @@ export const config = {
   NODE_ENV: process.env.NEXT_PUBLIC_NODE_ENV || 'dev',
 
   // API key
-  API_KEY: process.env.NEXT_PUBLIC_API_KEY || 'geoview_henrique',
+  API_KEY: process.env.NEXT_PUBLIC_API_KEY || 'api-key',
   
   // ID da sessão padrão
-  DEFAULT_SESSION_ID: process.env.NEXT_PUBLIC_DEFAULT_SESSION_ID || 'geobot',
+  DEFAULT_SESSION_ID: process.env.NEXT_PUBLIC_DEFAULT_SESSION_ID || 'default',
   
   // URLs da API (Backend roda na porta 3001)
   API_BASE_URL_LOCAL: process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL || 'http://localhost:3001',

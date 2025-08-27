@@ -3,24 +3,12 @@ import { SessionInfo } from './types';
 
 export const api = (path: string) => {
   // Remove o prefixo /api se existir
-  const cleanPath = path.startsWith('/api') ? path.substring(4) : path;
+  const cleanPath = path.startsWith('/api') ? path : `/api/${path}`;
   return `${getApiBaseUrl()}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
 };
 
 export const messageApi = (path: string) =>
   `${getMessageApiBaseUrl()}/api${path.startsWith('/') ? path : `/${path}`}`;
-
-export const getStatusText = (status: string) => {
-  const map: Record<string, string> = {
-    loading: '⌛ Carregando...',
-    connected: '✅ Conectado',
-    waiting: '🕒 Escaneie o QR para conectar...',
-    reconnecting: '🕒 Reconectando, aguarde...',
-    uninitialized: '⌛ Gerando QR Code...',
-    disconnected: '❌ Desconectado'
-  };
-  return map[status] || 'Estado desconhecido';
-};
 
 // Função para formatar número de telefone
 export const formatPhoneNumber = (phone: string) => {
@@ -46,12 +34,14 @@ export const validatePhoneNumber = (phone: string) => {
  */
 export const fetchSessionInfo = async (sessionId: string, apiKey: string, setSessionInfo: (sessionInfo: SessionInfo) => void) => {
   try {
-    const res = await fetch(api(`/client/getClassInfo/${sessionId}`), {
+    console.log("Tentando buscar informações da sessão: ", sessionId);
+    const res = await fetch(api(`/api/sessions/${sessionId}`), {
       headers: { 'x-api-key': apiKey }
     });
+    console.log("res: ", res);
     if (res.ok) {
       const data = await res.json();
-      setSessionInfo(data.sessionInfo);
+      setSessionInfo(data?.me ? data.me : { pushName: 'N/A', id: 'N/A' });
     }
   } catch (error) {
     console.error('Erro ao buscar informações da sessão:', error);
