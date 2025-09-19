@@ -75,7 +75,7 @@ export async function createMondayTask(name: string, boardId: number, groupId: s
   try {
     const response = await fetch(`${API_URL}/api/create-monday-task`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
       body: JSON.stringify({
         taskName: `GEOV0000-${shortYear}.${name}.${boardCode}`,
         boardId,
@@ -106,7 +106,7 @@ export async function createMondayTaskComment(phone: string, name: string, form:
   try {
     const response = await fetch(`${API_URL}/api/add-monday-comment`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
       body: JSON.stringify({
         itemId,
         description: comment
