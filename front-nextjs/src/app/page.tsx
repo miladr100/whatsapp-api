@@ -1,7 +1,7 @@
 'use client';
 // pages
 import { useEffect, useState } from 'react';
-import { messageApi, fetchSessionInfo } from "@/utils/functions";
+import { messageApi, messageApiRequest, fetchSessionInfo } from "@/utils/functions";
 import { getDefaultSessionId, getApiKey, getWhatsappApiBaseUrl } from "@/utils/config";
 import { ClientContact, SessionInfo } from "@/utils/types";
 
@@ -45,7 +45,7 @@ export default function ContactsPage() {
 
   // Carregar contatos ao iniciar
   useEffect(() => {
-    fetch(messageApi('/contacts?all=true'))
+    messageApiRequest('/contacts?all=true')
       .then(res => res.json())
       .then(data => {
         setAllContacts(data || []);
@@ -83,9 +83,8 @@ export default function ContactsPage() {
       phone: `${sanitizedNumber}@c.us`,
       name: whatsappName || "Desconhecido",
     };
-    const res = await fetch(messageApi('/block-contact'), {
+    const res = await messageApiRequest('/block-contact', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newDocument),
     });
 
@@ -100,7 +99,7 @@ export default function ContactsPage() {
   };
 
   const handleDeleteContact = async (phone: string) => {
-    const res = await fetch(messageApi(`/contacts?phone=${phone}`), { method: 'DELETE' });
+    const res = await messageApiRequest(`/contacts?phone=${phone}`, { method: 'DELETE' });
     const resesponse = await res.json();
     if (resesponse.success) {
       setContacts(prev => prev.filter(c => c.phone !== phone));
@@ -148,41 +147,74 @@ export default function ContactsPage() {
             <div className="form-input-container">
               <input
                 type="text"
-                placeholder="Nome (opcional)"
+                placeholder="👤 Nome do contato (opcional)"
                 value={whatsappName}
                 onChange={e => setWhatsappName(e.target.value)}
                 className="form-input"
               />
               <input
-                type="text"
-                placeholder="Número de telefone"
+                type="tel"
+                placeholder="📱 Número com DDD (ex: 11999999999)"
                 value={phoneNumber}
                 onChange={e => setPhoneNumber(e.target.value)}
                 className="form-input"
+                pattern="[0-9]{10,15}"
               />
             </div>
             <button onClick={handleBlockContact} className="form-button add">
-              Adicionar
+              🚫 Bloquear Contato
             </button>
           </div>
 
           <ul className="contacts-table">
-            {contacts.map(contact => (
-              <li key={contact.phone} className="contacts-item">
-                <div><strong>Número:</strong> {contact?.phone?.split('@')?.[0]}</div>
-                {contact.whatsappName && <div><strong>Nome:</strong> {contact.whatsappName}</div>}
-                <button
-                  onClick={() => handleDeleteContact(contact.phone)}
-                  className="remove-button"
-                >
-                  Remover
-                </button>
+            {contacts.length === 0 ? (
+              <li className="contacts-item">
+                <div className="contact-info">
+                  <div className="contact-name">📝 Nenhum contato bloqueado</div>
+                  <div className="contact-phone">Adicione contatos usando o formulário acima</div>
+                </div>
               </li>
-            ))}
+            ) : (
+              contacts.map(contact => (
+                <li key={contact.phone} className="contacts-item">
+                  <div className="contact-info">
+                    <div className="contact-name">
+                      {contact.whatsappName || "Sem nome"}
+                    </div>
+                    <div className="contact-phone">
+                      📞 {contact?.phone?.split('@')?.[0]}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteContact(contact.phone)}
+                    className="remove-button"
+                    title="Remover contato da lista de bloqueados"
+                  >
+                    🗑️ Remover
+                  </button>
+                </li>
+              ))
+            )}
           </ul>
         </div>
       ) : (
-        isServerOnline ? <h2 className="page-container">Carregando...</h2> : <h2 className="page-container">Servidor offline. Verifique a conexão do servidor.</h2>
+        isServerOnline ? (
+          <div className="page-container">
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <h2>Carregando aplicação...</h2>
+              <p>Conectando ao servidor de mensagens</p>
+            </div>
+          </div>
+        ) : (
+          <div className="page-container">
+            <div className="error-container">
+              <h2>🔌 Servidor Offline</h2>
+              <p>Não foi possível conectar ao servidor de mensagens.</p>
+              <p>Verifique se o servidor está rodando na porta 3001.</p>
+            </div>
+          </div>
+        )
       )}
     </>
   );

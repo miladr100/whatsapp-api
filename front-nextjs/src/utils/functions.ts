@@ -1,4 +1,4 @@
-import { getWhatsappApiBaseUrl, getMessageApiBaseUrl } from './config';
+import { getWhatsappApiBaseUrl, getMessageApiBaseUrl, getApiKey } from './config';
 import { SessionInfo } from './types';
 
 export const api = (path: string) => {
@@ -9,6 +9,29 @@ export const api = (path: string) => {
 
 export const messageApi = (path: string) =>
   `${getMessageApiBaseUrl()}/api${path.startsWith('/') ? path : `/${path}`}`;
+
+/**
+ * Função para fazer requisições para a API de mensagens com autenticação automática
+ * @param path - Caminho da API (ex: '/contacts', '/ping')
+ * @param options - Opções do fetch (método, body, etc.)
+ * @returns Promise com a resposta da requisição
+ */
+export const messageApiRequest = async (path: string, options: RequestInit = {}) => {
+  const url = messageApi(path);
+  const apiKey = getApiKey();
+  
+  // Merge dos headers, incluindo a API key automaticamente
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-api-key': apiKey,
+    ...options.headers,
+  };
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+};
 
 // Função para formatar número de telefone
 export const formatPhoneNumber = (phone: string) => {
