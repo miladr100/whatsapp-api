@@ -1,6 +1,9 @@
 import express, { Request, Response } from "express";
 import { ClientContactRepository } from "../repositories/clientContactRepository";
-import { ClientContactSchema } from "../schemas/ClientContactSchema";
+import { 
+  CreateClientContactSchema, 
+  UpdateClientContactSchema 
+} from "../schemas/ClientContactSchema";
 import { ZodError } from "zod";
 
 const router = express.Router();
@@ -28,7 +31,7 @@ router.get("/", async (req: Request, res: Response) => {
 // POST /api/contacts
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const parsed = ClientContactSchema.omit({ _id: true, createdAt: true }).parse(req.body);
+    const parsed = CreateClientContactSchema.parse(req.body);
     const created = await clientContactRepository.insertNewContact(parsed);
     return res.status(201).json(created);
   } catch (err) {
@@ -48,12 +51,13 @@ router.post("/", async (req: Request, res: Response) => {
 // PATCH /api/contacts
 router.patch("/", async (req: Request, res: Response) => {
   try {
-    const { phone, ...updateData } = req.body;
+    const validatedData = UpdateClientContactSchema.parse(req.body);
+    const { phone, ...updateData } = validatedData;
 
     const result = await clientContactRepository.updateContactByPhone(phone || "", updateData);
 
     if (result.matchedCount === 0) {
-      const parsed = ClientContactSchema.omit({ _id: true, createdAt: true }).parse(req.body);
+      const parsed = CreateClientContactSchema.parse(req.body);
       const created = await clientContactRepository.insertNewContact(parsed);
       return res.status(201).json(created);
     }

@@ -66,7 +66,7 @@ npm start
 - `server.ts`: Arquivo principal do servidor
 - `env.ts`: Configuração das variáveis de ambiente
 - `routes/`: Rotas da API
-- `models/`: Modelos do MongoDB
+- `schemas/`: Schemas do MongoDB
 - `utils/`: Utilitários (conexão MongoDB, etc.)
 
 ## Segurança

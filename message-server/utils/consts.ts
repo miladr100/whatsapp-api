@@ -75,31 +75,3 @@ export const BOARD_CODES = {
     },
   },
 };
-
-export const SERVICE_FORM = [
-  "1. Nome do solicitante:",
-  "2. Empresa (caso exista):",
-  "3. Email:",
-  "4. Telefone de contato:",
-  "5. Local do serviço:",
-  "6. Tamanho da área de pesquisa:",
-  "7. Previsão de realização do serviço:",
-  "8. Observações:"
-];
-
-export const WHATSAPP_STATES = {
-  CONNECTED: 'CONNECTED',
-  OPENING: 'OPENING',
-  PAIRING: 'PAIRING',
-  UNPAIRED: 'UNPAIRED',
-  UNPAIRED_IDLE: 'UNPAIRED_IDLE',
-  CONFLICT: 'CONFLICT',
-  TIMEOUT: 'TIMEOUT',
-  DEPRECATED_VERSION: 'DEPRECATED_VERSION',
-} as const;
-
-export const USER_MESSAGE_STATES = {
-  primeiro_contato: "primeiro_contato",
-  aguardando_formulario: "aguardando_formulario",
-  aguardando_opcao: "aguardando_opcao"
-}

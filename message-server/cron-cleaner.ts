@@ -1,8 +1,10 @@
 // cron-cleaner.ts
 import mongoose from "mongoose";
 import cron from "node-cron";
-import { ClientContactModel } from "./models/ClientContact";
 import { MONGO_URL } from './env';
+import { MESSAGE_PORT } from "./env";
+
+const API_URL = `http://localhost:${MESSAGE_PORT}`;
 
 if (!MONGO_URL) {
   console.error("❌ MONGO_URI não definido no env");
@@ -15,24 +17,12 @@ async function connectIfNotConnected() {
   }
 }
 
-const ClientContact = mongoose.model("ClientContact", ClientContactModel.schema);
-
-// 🔁 Executa 1 vez por dia às 02:00 da manhã
-cron.schedule("0 2 * * *", async () => {
-  console.log("🧹 Limpando dados antigos...");
-
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 15);
-
+// 🔁 Executa a cada 1 hora
+cron.schedule("0 * * * *", async () => {
   try {
-    const result = await ClientContact.deleteMany({
-      block: { $ne: true }, // não remove se block === true
-      $or: [
-        { createdAt: { $lt: cutoff } },
-        { form: { $in: [null, undefined] } }
-      ]
-    });
-    console.log(`✅ ${result.deletedCount} documentos apagados.`);
+    const contactsResult = await fetch(`${API_URL}/api/clean-contacts`).then(res => res.json());
+
+    console.log(`✅ Limpeza concluída: ${contactsResult.deletedContactsCount} contatos e ${contactsResult.deletedMessagesCount} mensagens removidos.`);
   } catch (err) {
     console.error("❌ Erro ao apagar documentos:", err);
   }

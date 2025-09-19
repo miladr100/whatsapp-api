@@ -6,10 +6,11 @@ import { FRONT_URL, MESSAGE_PORT } from './env';
 import { connectMongo } from './utils/mongo';
 
 import contactsRoutes from './routes/contacts';
-import processMessageRoutes from './routes/process-message';
+import createNewTaskRoutes from './routes/create-new-task';
 import createMondayTaskRoutes from './routes/create-monday-task';
 import addMondayCommentRoutes from './routes/add-monday-comment';
 import blockContactRoutes from './routes/block-contact';
+import cleanContactsRoutes from './routes/clean-contacts';
 import ping from './routes/ping';
 
 async function start() {
@@ -20,10 +21,11 @@ async function start() {
   app.use(bodyParser.json());
 
   app.use('/api/contacts', contactsRoutes);
-  app.use('/api/process-message', processMessageRoutes);
+  app.use('/api/create-new-task', createNewTaskRoutes);
   app.use('/api/create-monday-task', createMondayTaskRoutes);
   app.use('/api/add-monday-comment', addMondayCommentRoutes);
   app.use('/api/block-contact', blockContactRoutes);
+  app.use('/api/clean-contacts', cleanContactsRoutes);
   app.use('/api/ping', ping);
 
   const httpServer = createServer(app);

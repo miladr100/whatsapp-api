@@ -20,6 +20,9 @@ router.post("/", async (req: Request, res: Response) => {
         whatsappName: name || "Desconhecido",
         status: "bloqueado",
         block: true,
+        hasMedia: false,
+        lastMessageId: "",
+        running: false,
     };
     await fetch(`${API_URL}/api/contacts`, {
         method: 'PATCH',
