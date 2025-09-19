@@ -1,17 +1,31 @@
 export interface ClientContact {
-    whatsappName: string;
+    _id: any;
+    whatsappName: string | null;
     phone: string;
     status: string;
     service?: string | null;
-    form?: string | null;
+    form?: {
+        nome_solicitante?: string;
+        empresa?: string;
+        email?: string;
+        telefone_contato?: string;
+        local_servico?: string;
+        tamanho_area_pesquisa?: string;
+        previsao_realizacao_servico?: string;
+        observacoes?: string;
+    } | null;
     boardId?: string | null;
     groupId?: string | null;
     block: boolean;
+    hasMedia: boolean;
+    lastMessage?: string | null;
+    lastMessageId: string;
+    mediaUrl?: string | null;
+    running: boolean;
+    audioMessage?: string | null;
     createdAt?: Date;
     updatedAt?: Date;
 }
-
-export type WhatsAppStatus = 'connected' | 'waiting' | 'disconnected' | 'reconnecting' | 'uninitialized' | 'loading';
 
 export interface Message {
   number: string;

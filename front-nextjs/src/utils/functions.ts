@@ -1,10 +1,10 @@
-import { getApiBaseUrl, getMessageApiBaseUrl } from './config';
+import { getWhatsappApiBaseUrl, getMessageApiBaseUrl } from './config';
 import { SessionInfo } from './types';
 
 export const api = (path: string) => {
   // Remove o prefixo /api se existir
   const cleanPath = path.startsWith('/api') ? path : `/api/${path}`;
-  return `${getApiBaseUrl()}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
+  return `${getWhatsappApiBaseUrl()}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
 };
 
 export const messageApi = (path: string) =>
@@ -41,7 +41,7 @@ export const fetchSessionInfo = async (sessionId: string, apiKey: string, setSes
     console.log("res: ", res);
     if (res.ok) {
       const data = await res.json();
-      setSessionInfo(data?.me ? data.me : { pushName: 'N/A', id: 'N/A' });
+      setSessionInfo(data?.me ? data.me : {});
     }
   } catch (error) {
     console.error('Erro ao buscar informações da sessão:', error);

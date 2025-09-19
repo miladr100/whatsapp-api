@@ -2,7 +2,7 @@
 // pages
 import { useEffect, useState } from 'react';
 import { messageApi, fetchSessionInfo } from "@/utils/functions";
-import { getDefaultSessionId, getApiKey, getApiBaseUrl } from "@/utils/config";
+import { getDefaultSessionId, getApiKey, getWhatsappApiBaseUrl } from "@/utils/config";
 import { ClientContact, SessionInfo } from "@/utils/types";
 
 import './page.css';
@@ -19,7 +19,7 @@ export default function ContactsPage() {
   // ===== CONFIGURAÇÕES =====
   const sessionId = getDefaultSessionId();
   const apiKey = getApiKey();
-  const apiBaseUrl = getApiBaseUrl();
+  const apiBaseUrl = getWhatsappApiBaseUrl();
 
   useEffect(() => {
     const checkServer = async () => {
@@ -50,7 +50,7 @@ export default function ContactsPage() {
       .then(data => {
         setAllContacts(data || []);
         console.log("Todos os contatos carregados:", data);
-        return data.filter((c: ClientContact) => c.block);
+        return data.filter((c: ClientContact) => c.block && c.status.toLowerCase() === "bloqueado");
       })
       .then(data => setContacts(data || []))
       .catch(err => console.error('Erro ao buscar contatos', err));
@@ -104,6 +104,7 @@ export default function ContactsPage() {
     const resesponse = await res.json();
     if (resesponse.success) {
       setContacts(prev => prev.filter(c => c.phone !== phone));
+      setAllContacts(prev => prev.filter(c => c.phone !== phone));
       alert(`Contato ${phone} removido com sucesso!`);
     } else {
       console.error('Erro ao remover contato');
@@ -115,12 +116,12 @@ export default function ContactsPage() {
  */
   const SessionInfoDisplay = () => {
     return (
-      <div className="session-info">
+      sessionInfo !== null && (<div className="session-info">
         {sessionInfo ? (
           <>
             <h3>✅ Sessão Conectada</h3>
-            <p><strong>Nome:</strong> {sessionInfo?.pushName || 'N/A'}</p>
-            <p><strong>Telefone:</strong> {sessionInfo?.id || 'N/A'}</p>
+            <p><strong>Nome:</strong> {sessionInfo?.pushName}</p>
+            <p><strong>Telefone:</strong> {sessionInfo?.id}</p>
             <p><strong>ID da Sessão:</strong> {sessionId}</p>
             <a href={`${apiBaseUrl}/dashboard`} target="_blank" rel="noopener noreferrer">
               <button className="form-button add">
@@ -131,8 +132,7 @@ export default function ContactsPage() {
         ) : (
           <h3>❌ Sessão Desconectada</h3>
         )}
-      </div>
-    );
+      </div>));
   };
 
   return (

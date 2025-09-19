@@ -10,17 +10,17 @@ export const config = {
   DEFAULT_SESSION_ID: process.env.NEXT_PUBLIC_DEFAULT_SESSION_ID || 'default',
   
   // URLs da API (Backend roda na porta 3001)
-  API_BASE_URL_LOCAL: process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL || 'http://localhost:3001',
-  API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://sua-api-producao.com',
+  WHATSAPP_API_BASE_URL_LOCAL: process.env.NEXT_PUBLIC_WHATSAPP_API_BASE_URL_LOCAL || 'http://localhost:7000',
+  WHATSAPP_API_BASE_URL: process.env.NEXT_PUBLIC_WHATSAPP_API_BASE_URL || 'https://sua-api-whatsapp-producao.com',
   
   // URLs da API de mensagens (se necessário)
-  MESSAGE_API_BASE_URL_LOCAL: process.env.NEXT_PUBLIC_MESSAGE_API_BASE_URL_LOCAL || 'http://localhost:3002',
-  MESSAGE_API_BASE_URL: process.env.NEXT_PUBLIC_MESSAGE_API_BASE_URL || 'https://sua-api-producao.com'
+  MESSAGE_API_BASE_URL_LOCAL: process.env.NEXT_PUBLIC_MESSAGE_API_BASE_URL_LOCAL || 'http://localhost:3001',
+  MESSAGE_API_BASE_URL: process.env.NEXT_PUBLIC_MESSAGE_API_BASE_URL || 'https://sua-api-mensagens-producao.com'
 };
 
 // Função para obter a URL base da API baseada no ambiente
-export const getApiBaseUrl = () => {
-  return config.NODE_ENV === 'dev' ? config.API_BASE_URL_LOCAL : config.API_BASE_URL;
+export const getWhatsappApiBaseUrl = () => {
+  return config.NODE_ENV === 'dev' ? config.WHATSAPP_API_BASE_URL_LOCAL : config.WHATSAPP_API_BASE_URL;
 };
 
 // Função para obter a URL base da API de mensagens baseada no ambiente
