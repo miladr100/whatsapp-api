@@ -1,6 +1,5 @@
 import express from 'express';
 import { handleMondayNewTask, getContactByPhone } from '../utils/functions';
-import { API_KEY } from '../env';
 
 const router = express.Router();
 
@@ -11,16 +10,17 @@ function formatFormAsString(form: any): string {
     return 'Formulário não disponível';
   }
 
-  const fields = [];
+  const f = form as any;
+  const fields: string[] = [];
   
-  if (form.nome_solicitante) fields.push(`Nome: ${form.nome_solicitante}`);
-  if (form.empresa) fields.push(`Empresa: ${form.empresa}`);
-  if (form.email) fields.push(`Email: ${form.email}`);
-  if (form.telefone_contato) fields.push(`Telefone: ${form.telefone_contato}`);
-  if (form.local_servico) fields.push(`Local do Serviço: ${form.local_servico}`);
-  if (form.tamanho_area_pesquisa) fields.push(`Tamanho da Área: ${form.tamanho_area_pesquisa}`);
-  if (form.previsao_realizacao_servico) fields.push(`Previsão: ${form.previsao_realizacao_servico}`);
-  if (form.observacoes) fields.push(`Observações: ${form.observacoes}`);
+  if (f?.nome) fields.push(`Nome: ${f.nome}`);
+  if (f?.empresa) fields.push(`Empresa: ${f.empresa}`);
+  if (f?.email) fields.push(`Email: ${f.email}`);
+  if (f?.contato) fields.push(`Telefone: ${f.contato}`);
+  if (f?.local) fields.push(`Local do Serviço: ${f.local}`);
+  if (f?.area) fields.push(`Tamanho da Área: ${f.area}`);
+  if (f?.previsao) fields.push(`Previsão: ${f.previsao}`);
+  if (f?.observacoes) fields.push(`Observações: ${f.observacoes}`);
   
   return fields.length > 0 ? fields.join('\n') : 'Formulário vazio';
 }

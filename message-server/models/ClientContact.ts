@@ -6,13 +6,13 @@ export interface IClientContact extends Document {
   status: string;
   service?: string | null;
   form?: {
-    nome_solicitante?: string;
+    nome?: string;
     empresa?: string;
     email?: string;
-    telefone_contato?: string;
-    local_servico?: string;
-    tamanho_area_pesquisa?: string;
-    previsao_realizacao_servico?: string | null;
+    contato?: string;
+    local?: string;
+    area?: string;
+    previsao?: string | null;
     observacoes?: string | null;
   } | null;
   boardId?: string | null;
@@ -45,13 +45,13 @@ const ClientContactSchema = new Schema<IClientContact>(
     audioMessage: { type: String, default: null },
     form: {
       type: {
-        nome_solicitante: { type: String },
+        nome: { type: String },
         empresa: { type: String },
         email: { type: String },
-        telefone_contato: { type: String },
-        local_servico: { type: String },
-        tamanho_area_pesquisa: { type: String },
-        previsao_realizacao_servico: { type: String, default: null },
+        contato: { type: String },
+        local: { type: String },
+        area: { type: String },
+        previsao: { type: String, default: null },
         observacoes: { type: String, default: null },
       },
       default: null

@@ -2,13 +2,13 @@ import { z } from "zod";
 
 // Schema para o formulário de contato
 export const FormSchema = z.object({
-  nome_solicitante: z.string().optional(),
+  nome: z.string().optional(),
   empresa: z.string().optional(),
   email: z.string().email().optional(),
-  telefone_contato: z.string().optional(),
-  local_servico: z.string().optional(),
-  tamanho_area_pesquisa: z.string().optional(),
-  previsao_realizacao_servico: z.string().optional().nullable(),
+  contato: z.string().optional(),
+  local: z.string().optional(),
+  area: z.string().optional(),
+  previsao: z.string().optional().nullable(),
   observacoes: z.string().optional().nullable(),
 });
 
