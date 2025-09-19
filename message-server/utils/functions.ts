@@ -1,25 +1,19 @@
 import { BOARD_CODES } from "./consts";
-import { MESSAGE_PORT } from '../env';
-
-const API_URL = `http://localhost:${MESSAGE_PORT}`;
+import { API_URL } from "./consts";
+import { API_KEY } from "../env";
 
 export async function getContactByPhone(phone: string) {
   try {
-    console.log(`🔍 Buscando contato para telefone: ${phone}`);
     const response = await fetch(`${API_URL}/api/contacts?phone=${encodeURIComponent(phone)}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
     
-    console.log(`📡 Resposta do endpoint contacts: ${response.status} ${response.statusText}`);
-    
     if (response.ok) {
       const contact = await response.json();
-      console.log(`📋 Dados retornados do banco:`, contact);
       
       // Verificar se o contato foi encontrado (não é null)
       if (contact && contact.phone && contact.phone.trim()) {
-        console.log(`✅ Contato encontrado: ${contact.whatsappName} (${contact.phone})`);
         return { success: true, contact };
       } else {
         console.log(`❌ Contato não encontrado ou dados inválidos para telefone: ${phone}`);
@@ -41,7 +35,7 @@ export async function createNewContact(name: string, number: string) {
   try {
     await fetch(`${API_URL}/api/contacts`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
       body: JSON.stringify({
         whatsappName: name,
         phone: number,
@@ -57,7 +51,7 @@ export async function updateContact(number: string, content: string, service: st
   try {
     await fetch(`${API_URL}/api/contacts`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
       body: JSON.stringify(
         {
           phone: number,

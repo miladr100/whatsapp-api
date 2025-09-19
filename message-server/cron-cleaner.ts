@@ -2,9 +2,7 @@
 import mongoose from "mongoose";
 import cron from "node-cron";
 import { MONGO_URL } from './env';
-import { MESSAGE_PORT } from "./env";
-
-const API_URL = `http://localhost:${MESSAGE_PORT}`;
+import { API_URL } from "./utils/consts";
 
 if (!MONGO_URL) {
   console.error("❌ MONGO_URI não definido no env");

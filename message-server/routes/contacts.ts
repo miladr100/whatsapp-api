@@ -5,10 +5,11 @@ import {
   UpdateClientContactSchema 
 } from "../schemas/ClientContactSchema";
 import { ZodError } from "zod";
+import { MessagesRepository } from "../repositories/messagesRepository";
 
 const router = express.Router();
 const clientContactRepository = new ClientContactRepository();
-
+const messagesRepository = new MessagesRepository();
 // GET /api/contacts
 router.get("/", async (req: Request, res: Response) => {
   const all = req.query.all === "true";
@@ -91,6 +92,9 @@ router.delete("/", async (req: Request, res: Response) => {
     if (result.deletedCount === 0) {
       return res.status(404).json({ success: false, message: "Contato não encontrado." });
     }
+
+    // 2. Apagar as Messages relacionadas (sessionId = phone)
+    await messagesRepository.deleteMessagesBySessionId(phone);
 
     return res.json({ success: true, message: "Contato removido com sucesso.", phone });
   } catch (err) {

@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import { createServer } from "http";
 import { FRONT_URL, MESSAGE_PORT } from './env';
 import { connectMongo } from './utils/mongo';
+import { apiKeyAuth } from './middleware/auth';
 
 import contactsRoutes from './routes/contacts';
 import createNewTaskRoutes from './routes/create-new-task';
@@ -20,13 +21,16 @@ async function start() {
   app.use(cors({ origin: FRONT_URL }));
   app.use(bodyParser.json());
 
-  app.use('/api/contacts', contactsRoutes);
-  app.use('/api/create-new-task', createNewTaskRoutes);
-  app.use('/api/create-monday-task', createMondayTaskRoutes);
-  app.use('/api/add-monday-comment', addMondayCommentRoutes);
-  app.use('/api/block-contact', blockContactRoutes);
-  app.use('/api/clean-contacts', cleanContactsRoutes);
+  // Rota pública - sem autenticação
   app.use('/api/ping', ping);
+
+  // Aplicar autenticação a todas as outras rotas
+  app.use('/api/contacts', apiKeyAuth, contactsRoutes);
+  app.use('/api/create-new-task', apiKeyAuth, createNewTaskRoutes);
+  app.use('/api/create-monday-task', apiKeyAuth, createMondayTaskRoutes);
+  app.use('/api/add-monday-comment', apiKeyAuth, addMondayCommentRoutes);
+  app.use('/api/block-contact', apiKeyAuth, blockContactRoutes);
+  app.use('/api/clean-contacts', apiKeyAuth, cleanContactsRoutes);
 
   const httpServer = createServer(app);
 

@@ -1,3 +1,5 @@
+import { MESSAGE_PORT } from "../env";
+
 export const PROPOSAL_OPTIONS = [
   "Georadar (GPR)",
   "Locação de Georadar (GPR)",
@@ -75,3 +77,5 @@ export const BOARD_CODES = {
     },
   },
 };
+
+export const API_URL = `http://localhost:${MESSAGE_PORT}`;
