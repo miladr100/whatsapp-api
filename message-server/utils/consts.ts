@@ -5,7 +5,7 @@ export const PROPOSAL_OPTIONS = [
   "Locação de Georadar (GPR)",
   "Geoelétrica",
   "Sísmica - MASW",
-  "Geofísica Geral",
+  "Geofísica Geral  (mais de um método)",
   "Perfilagem Geofísica",
   "Perfilagem Ótica",
   "Topografia Geofísica",
@@ -44,7 +44,7 @@ export const BOARD_CODES = {
       title: "Propostas a fazer"
     },
   },
-  "Geofísica Geral": {
+  "Geofísica Geral (mais de um método)": {
     id: 1750329516,
     code: "GEO Geral",
     group: {
