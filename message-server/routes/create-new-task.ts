@@ -27,13 +27,7 @@ function formatFormAsString(form: any): string {
 
 router.post("/", async (req, res) => {
   try {
-    const { 'api-key': apiKey } = req.headers;
     const { phone } = req.body;
-
-    if (apiKey !== API_KEY) {
-      console.error("❌ Chave de API inválida");
-      return res.status(401).json({ error: "Chave de API inválida" });
-    }
 
     // Validar se o telefone foi fornecido
     if (!phone || typeof phone !== 'string' || phone.trim().length === 0) {

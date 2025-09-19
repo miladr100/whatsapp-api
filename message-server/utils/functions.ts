@@ -6,7 +6,7 @@ export async function getContactByPhone(phone: string) {
   try {
     const response = await fetch(`${API_URL}/api/contacts?phone=${encodeURIComponent(phone)}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
     });
     
     if (response.ok) {
@@ -39,7 +39,7 @@ export async function createNewContact(name: string, number: string) {
       body: JSON.stringify({
         whatsappName: name,
         phone: number,
-        status: "aguardando_opcao"
+        status: "em_atendimento"
       }),
     });
   } catch (err) {
