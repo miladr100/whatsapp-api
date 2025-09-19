@@ -1,7 +1,7 @@
 // cron-cleaner.ts
 import mongoose from "mongoose";
 import cron from "node-cron";
-import { MONGO_URL } from './env';
+import { API_KEY, MONGO_URL } from './env';
 import { API_URL } from "./utils/consts";
 
 if (!MONGO_URL) {
@@ -18,7 +18,7 @@ async function connectIfNotConnected() {
 // 🔁 Executa a cada 1 hora
 cron.schedule("0 * * * *", async () => {
   try {
-    const contactsResult = await fetch(`${API_URL}/api/clean-contacts`).then(res => res.json());
+    const contactsResult = await fetch(`${API_URL}/api/clean-contacts`, { headers: { 'x-api-key': API_KEY } }).then(res => res.json());
 
     console.log(`✅ Limpeza concluída: ${contactsResult.deletedContactsCount} contatos e ${contactsResult.deletedMessagesCount} mensagens removidos.`);
   } catch (err) {
