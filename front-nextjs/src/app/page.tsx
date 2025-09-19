@@ -2,7 +2,7 @@
 // pages
 import { useEffect, useState } from 'react';
 import { messageApi, messageApiRequest, fetchSessionInfo } from "@/utils/functions";
-import { getDefaultSessionId, getApiKey, getWhatsappApiBaseUrl } from "@/utils/config";
+import { getDefaultSessionId, getApiKey, getWhatsappApiBaseUrl, getMessageApiBaseUrl } from "@/utils/config";
 import { ClientContact, SessionInfo } from "@/utils/types";
 
 import './page.css';
@@ -20,6 +20,7 @@ export default function ContactsPage() {
   const sessionId = getDefaultSessionId();
   const apiKey = getApiKey();
   const apiBaseUrl = getWhatsappApiBaseUrl();
+  const messageApiBaseUrl = getMessageApiBaseUrl();
 
   useEffect(() => {
     const checkServer = async () => {
@@ -211,7 +212,7 @@ export default function ContactsPage() {
             <div className="error-container">
               <h2>🔌 Servidor Offline</h2>
               <p>Não foi possível conectar ao servidor de mensagens.</p>
-              <p>Verifique se o servidor está rodando na porta 3001.</p>
+              <p>Verifique se o servidor está rodando na porta <a href={`${messageApiBaseUrl}/api/ping`} target="_blank" rel="noopener noreferrer">{messageApiBaseUrl}</a>.</p>
             </div>
           </div>
         )
